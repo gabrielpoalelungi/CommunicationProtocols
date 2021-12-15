@@ -1,0 +1,53 @@
+321CC - POALELUNGI Gabriel - Tema 1 PCom - 2021
+
+Pentru aceasta tema am implementat:
+	- Parsarea tabelei de rutare;
+	- Procesul de dirijare;
+	- Suportul de ICMP;
+
+
+1) int read_route_table(struct route_table_entry *rtable, char *file_name)
+
+   Am implementat functia read_route_table care citeste tabela de rutare din rtableX.txt
+   si o salveaza intr-un vector de route_table_entry;
+
+   - Citesc linie cu linie din fisierul rtableX.txt printr-un fscanf ce citeste 4 valori deodata;
+   - Fiecare din cele 4 valori reprezinta, in aceasta ordine, prefix, next-hop, mask, interface;
+   - Convertesc fiecare valoare din string in uint32 (in afara de interface) si le salvezi in 
+     campurile corespunzatoare;
+   - Dupa conversie, salvezi noul route_table_entry in vector.
+
+   Probleme intampinate: daca declar 4 variabile de tip in_addr si aplic pentru fiecare inet_aton,
+   astfel incat sa fac conversiile pentru prefix, next-hop, mask, interface, programul da o eroare
+   de tip segmentation fault. De ce? No idea. Am rezolvat prin declararea unei singure variabile de
+   tip in_addr pe care am reciclat-o pentru fiecare din cele 4 campuri.
+
+2) struct route_table_entry *get_best_route(__u32 dest_ip)
+
+   Aceasta functie returneaza cea mai specifica cale (next_hop) pentru adresa IP destinatie data ca
+   parametru;
+
+   - Iterez prin fiecare element din vectorul de route_table_entry;
+   - Fac SI-logic intre adresa IP destinatie si masca din elementul curent si verific daca rezultatul
+     este egal cu prefixul din elementul curent;
+   - Daca da, salvez rezultatul ca fiind cea mai buna ruta daca nu am gasit pana acum nicio ruta buna
+     sau daca am gasit o ruta mai specifica ca cea anterioara;
+
+   Aceasta functie am implementat-o la laboratorul 4;
+
+
+Modul de functionare a router-ului:
+
+	- Primesc un pachet;
+	- Verific daca suma de control corespunde. Daca nu, dau discard pachetului;
+	- Verific daca e un ICMP Request. Daca da, trimit un echo reply si dau discard pachetului;
+	- Verific daca TTL <= 1. Daca da, trimit un ICMP - Time exceeded si dau discard pachetului;
+	- Caut cea mai buna ruta pentru pachet. Daca nu exista, trimit un ICMP - Destination unreachable
+	  si dau discard pachetului;
+	- Updatez suma de control si TTL-ul;
+	- Daca nu exista o adresa MAC corespunzatoare adresei IP destinatie, dau discard pachetului;
+	- Updatez adresele MAC destinatie si sursa ale pachetului;
+	- Trimit pachetul.
+
+P.S: Modul de dirijare a router-ului l-am implementat si la laboratorul 4. Singurele modificari au fost
+	integrarea trimiterii de pachete ICMP in acelasi schelet de cod (It's not much, but it's honest work).
